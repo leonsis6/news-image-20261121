@@ -52,6 +52,13 @@ if (width === 0 || height === 0 || width > MAX_DIMENSION || height > MAX_DIMENSI
   fail(`entry.png must be at most 1024 by 1024 pixels, got ${width} by ${height}`);
 }
 
+// A whole image: the file must end with the IEND chunk (4 zero length bytes,
+// the ASCII letters IEND, and its 4-byte CRC) and nothing after it.
+const IEND_TAIL = Buffer.from([0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44]);
+if (bytes.length < 45 || !bytes.subarray(bytes.length - 12, bytes.length - 4).equals(IEND_TAIL)) {
+  fail('entry.png is truncated or has trailing data: no IEND chunk at the end');
+}
+
 mkdirSync(OUTPUT_DIR, { recursive: true });
 const target = join(OUTPUT_DIR, 'entry.png');
 writeFileSync(target, bytes);
